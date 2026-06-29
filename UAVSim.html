@@ -78,7 +78,7 @@
             width: 100%;
             height: 100%;
             z-index: 5;
-            pointer-events: none;
+            pointer-events: auto; /* 改為可接收點擊，用於主衛星視圖的點擊定位 */
         }
 
         /* 頂部整合列 */
@@ -326,6 +326,39 @@
         startAutoFlight([e.latlng.lat, e.latlng.lng], '🎯 導航至指定座標中...');
     });
 
+    // 📍 點擊「主衛星視圖」也能定位導航
+    // 主視圖因 CSS 3D 變形(rotateX/rotateZ)，無法直接用 Leaflet 內建座標換算，
+    // 因此採用與搖桿操控「相同的幾何補償」反向換算：將點擊位置相對畫面中心的
+    // 像素偏移，反轉 45° 美術旋轉補償後，依目前縮放層級換算成實際經緯度位移。
+    function handleSatelliteViewClick(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = clientX - rect.left;
+        const clickY = clientY - rect.top;
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const dx = clickX - cx;
+        const dy = clickY - cy;
+
+        // 反向套用搖桿移動時使用的 -45° 美術旋轉補償（取其反向角度 +45°）
+        const invRad = 45 * Math.PI / 180;
+        const geoDx = dx * Math.cos(invRad) - dy * Math.sin(invRad); // 東西方向像素分量
+        const geoDy = dx * Math.sin(invRad) + dy * Math.cos(invRad); // 南北方向像素分量
+
+        // 依目前地圖縮放層級，將像素距離換算為實際公尺數
+        const zoom = map25d.getZoom();
+        const metersPerPixel = 156543.03392 * Math.cos(currentUAVPos[0] * Math.PI / 180) / Math.pow(2, zoom);
+        const dEastM = geoDx * metersPerPixel;
+        const dNorthM = -geoDy * metersPerPixel; // 畫面上方（負 dy）＝北方
+
+        const mLat = 111320;
+        const mLng = 111320 * Math.cos(currentUAVPos[0] * Math.PI / 180);
+        const targetLat = currentUAVPos[0] + dNorthM / mLat;
+        const targetLng = currentUAVPos[1] + dEastM / mLng;
+
+        autoFlightArrivalMsg = '✅ 已抵達指定座標，可恢復手動操控';
+        startAutoFlight([targetLat, targetLng], '🎯 導航至指定座標中...');
+    }
+
     // 3. 系統狀態數據變數
     let telemetry = {
         roll: -3.3, pitch: -8.6, airspeed: 29.2, altitude: 8107.7,
@@ -347,6 +380,14 @@
     const ctx = canvas.getContext('2d');
     const wrapper = document.getElementById('mapWrapper');
     let ws = null;
+
+    // 主衛星視圖點擊定位：滑鼠點擊與觸控點按皆支援
+    canvas.addEventListener('click', (e) => handleSatelliteViewClick(e.clientX, e.clientY));
+    canvas.addEventListener('touchend', (e) => {
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            handleSatelliteViewClick(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        }
+    });
 
     function resizeCanvas() {
         canvas.width = canvas.parentElement.clientWidth;
