@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BeeQ 航太級戰術控制站 - GitHub 終極修正版</title>
+    <title>BeeQ 航太級戰術控制站 - 天空藍航線版</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -15,6 +15,7 @@
             --text-main: #ffffff;
             --text-muted: #78909c;
             --danger-red: #ff1744;
+            /* 全新天空藍漸層配色 */
             --sky-blue-top: #29b6f6;
             --sky-blue-mid: #0288d1;
         }
@@ -43,7 +44,7 @@
             height: 100%;
         }
 
-        /* 上半部：主螢幕 2.5D 衛星舞台（天空藍科技漸層） */
+        /* 上半部：主螢幕 2.5D 衛星舞台（更換為天空藍漸層背景） */
         .viewport-stage {
             position: relative;
             flex: 1;
@@ -66,7 +67,7 @@
         #map25d {
             width: 100%;
             height: 100%;
-            background: transparent !important;
+            background: transparent !important; /* 讓天空藍背景穿透 */
         }
 
         /* 發光 Canvas 姿態儀與中央飛機層 */
@@ -173,7 +174,7 @@
         .btn-gcs.primary-go { background: linear-gradient(135deg, #00c853, #009624); border: none; }
         .btn-gcs.danger-stop { background: linear-gradient(135deg, #d50000, #b71c1c); border: none; }
 
-        /* 中區：2D戰術位置平面小地圖面板（GitHub 安全優化版） */
+        /* 中區：2D戰術位置平面小地圖面板（100% 顯示保障） */
         .minimap-container {
             width: 380px;
             height: 210px;
@@ -189,7 +190,7 @@
         #map2d {
             width: 100%;
             height: 175px; 
-            background: #121824;
+            background: #0d1522;
         }
         .minimap-banner {
             height: 35px;
@@ -232,14 +233,14 @@
                 <input type="text" class="uav-input" id="uavAddr" value="ws://127.0.0.1:8080" placeholder="ws://UAV-IP:PORT">
                 <button class="btn-connect" id="btnConnect" onclick="toggleUAVConnection()">連線 UAV</button>
             </div>
-            <div class="status-badge" style="color:#00e5ff; border-color:#00e5ff;" id="ui-main-mode">2.5D 航向幾何同步站</div>
+            <div class="status-badge" style="color:#00e5ff; border-color:#00e5ff;" id="ui-main-mode">2.5D 精密戰術控制站</div>
             <div class="status-badge" style="color:#ffb300" id="lbl-bat">🔋 96%</div>
         </div>
 
         <div class="left-control-box">
             <div class="info-card green-accent"><div class="info-label">GPS Sat</div><div class="info-value" id="lbl-sat">21</div></div>
-            <div class="info-card green-accent"><div class="info-label">Heading</div><div class="info-value" id="lbl-yaw-val">45.0°</div></div>
-            <div class="info-card orange-accent"><div class="info-label">RSSI</div><div class="info-value">99.2%</div></div>
+            <div class="info-card green-accent"><div class="info-label">Pitch</div><div class="info-value" id="lbl-pitch">-8.6°</div></div>
+            <div class="info-card orange-accent"><div class="info-label">RSSI</div><div class="info-value">98.0%</div></div>
         </div>
 
         <div class="right-telemetry-box">
@@ -252,8 +253,8 @@
     <div class="bottom-dock">
         <div class="action-grid">
             <button class="btn-gcs primary-go" onclick="alert('下達自動起飛')">🛫<br>起飛</button>
-            <button class="btn-gcs" onclick="triggerSmoothRTL()">🏠<br>自動返航</button>
-            <button class="btn-gcs" onclick="resetDroneView()">🔄<br>視角居中</button>
+            <button class="btn-gcs" onclick="triggerReturnToLaunch()">🏠<br>返航</button>
+            <button class="btn-gcs" onclick="resetDroneView()">🔄<br>居中</button>
             <button class="btn-gcs danger-stop" onclick="alert('緊急迫降！')">🛑<br>迫降</button>
         </div>
 
@@ -269,43 +270,43 @@
             <div class="joystick-boundary" id="joyContainer">
                 <div class="joystick-thumb" id="joyStick"></div>
             </div>
-            <div class="kb-hint">W/S 前進後退 | A/D 左右轉頭</div>
+            <div class="kb-hint">支援 W/A/S/D 或 ⬆️⬇️⬅️➡️</div>
         </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 預設基地點（高雄港區核心座標）與當前座標
-    const homePos = [22.6204, 120.2817];
+    // 預設基地點（高雄港區核心座標）
+    let homePos = [22.6204, 120.2817];
     let currentUAVPos = [22.6204, 120.2817];
 
-    // 1. 初始化 2.5D 立體衛星主地圖 (更換為 GitHub Pages 完全合規的頂級安全 HTTPS 來源)
+    // 1. 初始化 2.5D 立體衛星主地圖
     const map25d = L.map('map25d', { 
         zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, doubleClickZoom: false, scrollWheelZoom: false
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{y}/{x}{r}.png', { maxZoom: 18 }).addTo(map25d);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map25d);
 
-    // 2. 初始化 2D 二維平面戰術小地圖 (同樣換上 100% 支援 HTTPS 的灰階戰術圖磚)
+    // 2. 初始化 2D 二維平面戰術小地圖
     const map2d = L.map('map2d', {
         zoomControl: false, attributionControl: false, dragging: true, touchZoom: true
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', { maxZoom: 16 }).addTo(map2d);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 16
+    }).addTo(map2d);
 
     // 在 2D 小地圖上建立高亮戰術標記
     const uavMarker = L.circleMarker(homePos, {
         radius: 8, fillColor: '#ff1744', color: '#fff', weight: 2, fillOpacity: 1.0
     }).addTo(map2d);
 
-    // 3. 系統核心遙測變數 (納入 yaw 航向角控制)
+    // 3. 系統狀態數據變數
     let telemetry = {
-        roll: -3.3, pitch: -8.6, yaw: 45.0, 
-        airspeed: 29.2, altitude: 8107.7,
+        roll: -3.3, pitch: -8.6, airspeed: 29.2, altitude: 8107.7,
         joyX: 0, joyY: 0, sat: 21, bat: 96
     };
 
     let keysPressed = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-    let isRTLActive = false; // 是否正在自動回航中
 
     const canvas = document.getElementById('hudCanvas');
     const ctx = canvas.getContext('2d');
@@ -319,12 +320,14 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // 🎯 【精密雙地圖定位刷新】：整合 3D 俯仰視差補償與 3D 航向角（Yaw）
+    wrapper.style.transform = `rotateX(60deg) rotateZ(45deg)`;
+
+    // 🎯 【精準雙地圖居中定位函數】：加入 -0.0018 經緯幾何透視補償
     function resetDroneView() {
         map25d.invalidateSize();
         map2d.invalidateSize();
 
-        // 3D 傾斜視覺補償
+        // 進行 3D 傾斜視差補償運算（消除 rotateX 產生的視覺物理偏離）
         let compensatedLat = currentUAVPos[0] - 0.0018; 
         let compensatedLng = currentUAVPos[1];
 
@@ -336,75 +339,66 @@
         document.getElementById('lbl-coords').innerText = `${currentUAVPos[0].toFixed(2)},${currentUAVPos[1].toFixed(2)}`;
     }
 
-    // 🏠 【真·自動漸進飛行返航功能】：拒絕瞬間閃現，實作連續平滑逼近
-    function triggerSmoothRTL() {
-        if (isRTLActive) return;
-        isRTLActive = true;
-        document.getElementById('ui-main-mode').innerText = "RTL AUTOPILOT";
-        document.getElementById('ui-main-mode').style.color = var(--danger-red);
-
-        let steps = 60; // 模擬 60 個訊框內飛完（約 1.5 ~ 2 秒）
-        let currentStep = 0;
-        
-        let startLat = currentUAVPos[0];
-        let startLng = currentUAVPos[1];
-
-        let rtlTimer = setInterval(() => {
-            currentStep++;
-            let t = currentStep / steps;
-
-            // 線性插值（Lerp）計算回航中間位置
-            let nextLat = startLat + (homePos[0] - startLat) * t;
-            let nextLng = startLng + (homePos[1] - startLng) * t;
-            currentUAVPos = [nextLat, nextLng];
-
-            // 實時修正航向角指向基地點
-            if (currentStep === 1) {
-                let dLat = homePos[0] - startLat;
-                let dLng = homePos[1] - startLng;
-                telemetry.yaw = Math.atan2(dLng, dLat) * 180 / Math.PI;
-            }
-
-            // 同步地圖與標記
-            resetDroneView();
-
-            if (currentStep >= steps) {
-                clearInterval(rtlTimer);
-                isRTLActive = false;
-                document.getElementById('ui-main-mode').innerText = "2.5D 航向幾何同步站";
-                document.getElementById('ui-main-mode').style.color = "#00e5ff";
-                alert("🛸 無人機已安全飛返並降落於 Home 起飛點！");
-            }
-        }, 30);
+    // 🏠 【實作功能：自動返航機制】
+    function triggerReturnToLaunch() {
+        console.log("自主返航指令已下達...正在重設座標至 Home 點");
+        // 將無人機當前位置重置回基地點
+        currentUAVPos = [homePos[0], homePos[1]];
+        // 呼叫雙地圖精密重置定位
+        resetDroneView();
+        alert("🛸 自主返航安全機制已啟動！無人機正自動返回 Home 基地點。");
     }
 
-    // 🌐 Real-Time WebSocket
+    // 🌐 Real-Time UAV WebSocket 連線通訊埠
     function toggleUAVConnection() {
-        if (ws && ws.readyState === WebSocket.OPEN) { ws.close(); return; }
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.close();
+            return;
+        }
         const addr = document.getElementById('uavAddr').value;
         const btn = document.getElementById('btnConnect');
         btn.innerText = "連線中...";
+
         ws = new WebSocket(addr);
-        ws.onopen = () => { btn.innerText = "已連線"; btn.classList.add('connected'); };
+        ws.onopen = () => {
+            btn.innerText = "已連線";
+            btn.classList.add('connected');
+            document.getElementById('ui-main-mode').innerText = "LIVE TELEMETRY";
+        };
+
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.lat && data.lng) {
                     currentUAVPos = [data.lat, data.lng];
-                    resetDroneView();
+                    uavMarker.setLatLng(currentUAVPos);
+                    
+                    let compensatedLat = data.lat - 0.0018; 
+                    map25d.setView([compensatedLat, data.lng], map25d.getZoom(), { animate: false });
+                    map2d.panTo(currentUAVPos);
+                    
+                    document.getElementById('lbl-2d-pos').innerText = `位置: ${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}`;
+                    document.getElementById('lbl-coords').innerText = `${data.lat.toFixed(2)},${data.lng.toFixed(2)}`;
                 }
-                if (data.yaw !== undefined) telemetry.yaw = data.yaw;
                 if (data.roll !== undefined) telemetry.roll = data.roll;
                 if (data.pitch !== undefined) telemetry.pitch = data.pitch;
                 if (data.alt !== undefined) telemetry.altitude = data.alt;
                 if (data.speed !== undefined) telemetry.airspeed = data.speed;
-            } catch (e) {}
+                if (data.sat !== undefined) telemetry.sat = data.sat;
+                if (data.bat !== undefined) telemetry.bat = data.bat;
+            } catch (e) { console.log(event.data); }
         };
-        ws.onclose = () => { btn.innerText = "連線 UAV"; btn.classList.remove('connected'); ws = null; };
+
+        ws.onclose = () => {
+            btn.innerText = "連線 UAV";
+            btn.classList.remove('connected');
+            document.getElementById('ui-main-mode').innerText = "2.5D 精密戰術控制站";
+            ws = null;
+        };
         ws.onerror = () => { ws.close(); };
     }
 
-    // ⌨️ 鍵盤操控綁定
+    // ⌨️ 鍵盤操控
     window.addEventListener('keydown', (e) => {
         if (["w","a","s","d","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
             keysPressed[e.key] = true; updateJoystickFromKeyboard();
@@ -424,44 +418,16 @@
         if (keysPressed.d || keysPressed.ArrowRight) x += maxKBLen;
         telemetry.joyX = x; telemetry.joyY = y;
         joyStick.style.transform = `translate(${x}px, ${y}px)`;
+        telemetry.roll = (x / maxKBLen) * 25; telemetry.pitch = -(y / maxKBLen) * 15;
     }
 
-    // 6. 🔄 60FPS 核心全聯動控制環（重構：左右操作改為控制機頭 Heading 旋轉）
+    // 6. 60FPS 核心聯動控制環
     function renderLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const cx = canvas.width / 2; const cy = canvas.height / 2;
 
-        // 【合理的操控重構】：
-        // 1. 搖桿左右推（joyX）：驅動「機頭航向角（Yaw / Heading）」進行旋轉
-        if (Math.abs(telemetry.joyX) > 0.01) {
-            telemetry.yaw += (telemetry.joyX / 42) * 2.0; // 旋轉速度係數
-            telemetry.roll = (telemetry.joyX / 42) * 20;  // 轉向時帶有自然的機身側傾
-        } else {
-            telemetry.roll *= 0.8; // 自動回正
-        }
-
-        // 2. 搖桿前後推（joyY）：驅動無人機沿著「當前機頭朝向」向前/後飛行
-        if (Math.abs(telemetry.joyY) > 0.01 && !isRTLActive) {
-            telemetry.pitch = -(telemetry.joyY / 42) * 15;
-            
-            // 根據當前的航向角（Yaw）將前後移動向量分解為真實經緯度位移
-            let yawRad = (telemetry.yaw - 45) * Math.PI / 180; // 45度角為網頁透視視差修正
-            let speedMultiplier = 0.00002 * (telemetry.joyY / 42);
-            
-            currentUAVPos[0] -= speedMultiplier * Math.cos(yawRad);
-            currentUAVPos[1] -= speedMultiplier * Math.sin(yawRad);
-
-            uavMarker.setLatLng(currentUAVPos);
-            map2d.setView(currentUAVPos, map2d.getZoom(), { animate: false });
-        } else if (!isRTLActive) {
-            telemetry.pitch = telemetry.pitch * 0.8 - 8.6 * 0.2; // 漸漸回到預設俯角
-        }
-
-        // 3. 【航向連動】動態更新 3D 立體衛星地圖的外殼旋轉（rotateZ 完美對齊機頭朝向）
-        wrapper.style.transform = `rotateX(60deg) rotateZ(${telemetry.yaw}deg)`;
-
-        // ---- HUD 姿態儀畫布層 ----
-        ctx.save(); ctx.translate(cx, cy); ctx.rotate(telemetry.roll * Math.PI / 180); ctx.translate(0, (telemetry.pitch + 8.6) * 3.5);
+        // HUD 姿態儀
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(telemetry.roll * Math.PI / 180); ctx.translate(0, telemetry.pitch * 3.5);
         ctx.strokeStyle = 'rgba(0, 230, 118, 0.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-140, 0); ctx.lineTo(140, 0); ctx.stroke();
         for(let i = -30; i <= 30; i += 10) {
             if(i !== 0) {
@@ -471,27 +437,37 @@
         }
         ctx.restore();
 
-        // 中央固定十字十字刻度
+        // 基準固定十字游標
         ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx - 35, cy); ctx.lineTo(cx - 12, cy); ctx.lineTo(cx, cy + 8); ctx.lineTo(cx + 12, cy); ctx.lineTo(cx + 35, cy); ctx.stroke();
 
-        // 刷新頂層 2.5D 立體視角中心
-        if (!isRTLActive) {
-            let compensatedLat = currentUAVPos[0] - 0.0018;
-            map25d.setView([compensatedLat, currentUAVPos[1]], map25d.getZoom(), { animate: false });
+        // 模擬飛行前進
+        if (Math.abs(telemetry.joyX) > 0.01 || Math.abs(telemetry.joyY) > 0.01) {
+            let fixRad = -45 * Math.PI / 180;
+            let mapDx = telemetry.joyX * Math.cos(fixRad) - telemetry.joyY * Math.sin(fixRad);
+            let mapDy = telemetry.joyX * Math.sin(fixRad) + telemetry.joyY * Math.cos(fixRad);
+
+            map25d.panBy([mapDx * 1.8, mapDy * 1.8], { animate: false });
+
+            let center25d = map25d.getCenter();
+            currentUAVPos = [center25d.lat + 0.0018, center25d.lng]; 
+            
+            uavMarker.setLatLng(currentUAVPos);
+            map2d.setView(currentUAVPos, map2d.getZoom(), { animate: false });
+
+            document.getElementById('lbl-2d-pos').innerText = `位置: ${currentUAVPos[0].toFixed(4)}, ${currentUAVPos[1].toFixed(4)}`;
+            document.getElementById('lbl-coords').innerText = `${currentUAVPos[0].toFixed(2)},${currentUAVPos[1].toFixed(2)}`;
         }
 
-        // 資料面板刷新
         document.getElementById('lbl-alt').innerText = telemetry.altitude.toFixed(1) + " m";
-        document.getElementById('lbl-speed').innerText = (Math.abs(telemetry.joyY) > 0.01 ? 35.4 : 0.0).toFixed(1) + " m/s";
+        document.getElementById('lbl-speed').innerText = telemetry.airspeed.toFixed(1) + " m/s";
         document.getElementById('lbl-pitch').innerText = telemetry.pitch.toFixed(1) + "°";
-        document.getElementById('lbl-yaw-val').innerText = (telemetry.yaw % 360).toFixed(1) + "°";
-        document.getElementById('lbl-2d-pos').innerText = `位置: ${currentUAVPos[0].toFixed(4)}, ${currentUAVPos[1].toFixed(4)}`;
-        document.getElementById('lbl-coords').innerText = `${currentUAVPos[0].toFixed(2)},${currentUAVPos[1].toFixed(2)}`;
+        document.getElementById('lbl-sat').innerText = telemetry.sat;
+        document.getElementById('lbl-bat').innerText = "🔋 " + telemetry.bat + "%";
 
         requestAnimationFrame(renderLoop);
     }
 
-    // 7. 搖桿指尖滑動模組
+    // 7. 搖桿事件
     const joyContainer = document.getElementById('joyContainer'); const joyStick = document.getElementById('joyStick'); let isMoving = false;
     function handleJoystickMove(clientX, clientY) {
         const rect = joyContainer.getBoundingClientRect();
@@ -500,20 +476,21 @@
         if (dist > maxLen) { x = (x / dist) * maxLen; y = (y / dist) * maxLen; }
         joyStick.style.transform = `translate(${x}px, ${y}px)`;
         telemetry.joyX = x; telemetry.joyY = y;
+        telemetry.roll = (x / maxLen) * 25; telemetry.pitch = -(y / maxLen) * 15;
     }
     joyStick.addEventListener('mousedown', () => { isMoving = true; });
     joyStick.addEventListener('touchstart', () => { isMoving = true; });
     window.addEventListener('mousemove', (e) => { if (isMoving) handleJoystickMove(e.clientX, e.clientY); });
     window.addEventListener('touchmove', (e) => { if (isMoving) handleJoystickMove(e.touches[0].clientX, e.touches[0].clientY); });
-    function resetJoystick() { isMoving = false; joyStick.style.transform = `translate(0px, 0px)`; telemetry.joyX = 0; telemetry.joyY = 0; }
+    function resetJoystick() { isMoving = false; joyStick.style.transform = `translate(0px, 0px)`; telemetry.joyX = 0; telemetry.joyY = 0; telemetry.roll = -3.3; telemetry.pitch = -8.6; }
     window.addEventListener('mouseup', resetJoystick); window.addEventListener('touchend', resetJoystick);
 
-    // ⚡ 網頁載入時強制排版對齊
+    // 頁面加載完成自動初次對齊
     window.onload = function() {
         setTimeout(() => {
             resetDroneView();
             resizeCanvas();
-        }, 400);
+        }, 300);
     };
 
     renderLoop();
