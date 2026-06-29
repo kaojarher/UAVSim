@@ -275,7 +275,7 @@
             <div id="map2d"></div>
             <div class="minimap-banner">
                 <span id="lbl-2d-pos">位置: 22.6204, 120.2817</span>
-                <button class="btn-location-sync" onclick="resetDroneView()">🎯 修正定位</button>
+                <button class="btn-location-sync" onclick="acquireGpsFix()">🎯 修正定位</button>
             </div>
         </div>
 
@@ -397,6 +397,46 @@
     resizeCanvas();
 
     wrapper.style.transform = `rotateX(60deg) rotateZ(45deg)`;
+
+    // 🛰️ 【實作功能：GPS 修正定位】－ 透過瀏覽器 Geolocation API 取得裝置目前實際座標
+    // 修正前版本「修正定位」按鈕僅呼叫 resetDroneView() 把地圖重新置中於既有座標，
+    // 並未真正去「定位」；現改為實際向裝置請求 GPS 座標，取得後才重新置中地圖。
+    function acquireGpsFix() {
+        const modeEl = document.getElementById('ui-main-mode');
+        const restoreLabel = () => {
+            modeEl.innerText = (ws && ws.readyState === WebSocket.OPEN) ? "LIVE TELEMETRY" : "2.5D 精密戰術控制站";
+        };
+
+        if (!navigator.geolocation) {
+            modeEl.innerText = '⚠️ 此瀏覽器/環境不支援 GPS 定位';
+            setTimeout(restoreLabel, 2500);
+            return;
+        }
+
+        modeEl.innerText = '🛰️ 正在取得 GPS 定位...';
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                currentUAVPos = [pos.coords.latitude, pos.coords.longitude];
+                // 依定位精度（公尺）模擬可視衛星數，精度越高顯示衛星數越多
+                if (pos.coords.accuracy) {
+                    telemetry.sat = Math.max(4, Math.min(32, Math.round(40 - pos.coords.accuracy / 5)));
+                }
+                resetDroneView();
+                modeEl.innerText = `✅ GPS 定位成功（精度 ±${Math.round(pos.coords.accuracy || 0)}m）`;
+                setTimeout(restoreLabel, 1800);
+            },
+            (err) => {
+                let msg = '⚠️ GPS 定位失敗，請再試一次';
+                if (err.code === err.PERMISSION_DENIED) msg = '⚠️ 已拒絕定位權限，請於瀏覽器設定中允許';
+                else if (err.code === err.TIMEOUT) msg = '⚠️ GPS 定位逾時，請確認訊號後再試';
+                else if (err.code === err.POSITION_UNAVAILABLE) msg = '⚠️ 目前無法取得 GPS 座標';
+                modeEl.innerText = msg;
+                setTimeout(restoreLabel, 2800);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
 
     // 🎯 【精準雙地圖居中定位函數】：加入 -0.0018 經緯幾何透視補償
     function resetDroneView() {
