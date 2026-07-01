@@ -15,7 +15,6 @@
             --text-main: #ffffff;
             --text-muted: #78909c;
             --danger-red: #ff1744;
-            /* 全新天空藍漸層配色 */
             --sky-blue-top: #29b6f6;
             --sky-blue-mid: #0288d1;
         }
@@ -44,7 +43,6 @@
             height: 100%;
         }
 
-        /* 上半部：主螢幕 2.5D 衛星舞台（更換為天空藍漸層背景） */
         .viewport-stage {
             position: relative;
             flex: 1;
@@ -53,7 +51,6 @@
             perspective: 1000px; 
         }
 
-        /* 2.5D 立體衛星地圖外殼 */
         .map-wrapper {
             position: absolute;
             width: 240%;
@@ -67,10 +64,9 @@
         #map25d {
             width: 100%;
             height: 100%;
-            background: transparent !important; /* 讓天空藍背景穿透 */
+            background: transparent !important;
         }
 
-        /* 發光 Canvas 姿態儀與中央飛機層 */
         #hudCanvas {
             position: absolute;
             top: 0;
@@ -78,10 +74,9 @@
             width: 100%;
             height: 100%;
             z-index: 5;
-            pointer-events: auto; /* 改為可接收點擊，用於主衛星視圖的點擊定位 */
+            pointer-events: auto;
         }
 
-        /* 頂部整合列 */
         .top-statusbar {
             position: absolute;
             top: 10px;
@@ -142,7 +137,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
 
-        /* 雙側遙測數據盒 */
         .left-control-box { position: absolute; left: 10px; top: 90px; z-index: 10; width: 100px; display: flex; flex-direction: column; gap: 6px; }
         .right-telemetry-box { position: absolute; right: 10px; top: 90px; z-index: 10; width: 105px; display: flex; flex-direction: column; gap: 6px; }
         .info-card { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 4px; padding: 6px 4px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -151,7 +145,6 @@
         .info-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
         .info-value { font-size: 13px; font-weight: bold; color: var(--accent-green); text-shadow: 0 0 4px rgba(0, 230, 118, 0.6); }
 
-        /* 下半部：控制底盤 */
         .bottom-dock {
             height: 250px;
             background: linear-gradient(to bottom, #0d1522 0%, #05080f 100%);
@@ -165,7 +158,6 @@
             box-shadow: 0 -5px 20px rgba(0,0,0,0.7);
         }
 
-        /* 左區：戰術動作按鈕組 */
         .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 220px; height: 100%; padding: 10px 0; }
         .btn-gcs {
             background: #152030; border: 1px solid #2d3f58; color: #ffffff; border-radius: 6px; font-size: 13px; font-weight: bold; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
@@ -174,7 +166,6 @@
         .btn-gcs.primary-go { background: linear-gradient(135deg, #00c853, #009624); border: none; }
         .btn-gcs.danger-stop { background: linear-gradient(135deg, #d50000, #b71c1c); border: none; }
 
-        /* 中區：2D戰術位置平面小地圖面板（100% 顯示保障） */
         .minimap-container {
             width: 380px;
             height: 210px;
@@ -207,8 +198,7 @@
             background: #00e5ff; color: #000; border: none; border-radius: 3px; padding: 3px 8px; font-weight: bold; cursor: pointer; font-size: 10px;
         }
 
-        /* 右區：虛擬搖桿 */
-        .joystick-wrapper { width: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .joystick-wrapper { width: 160px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 30; }
         .joystick-boundary {
             width: 120px; height: 120px; background: rgba(21, 32, 48, 0.7); border: 2px dashed rgba(0, 229, 255, 0.3); border-radius: 50%; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
         }
@@ -217,7 +207,6 @@
         }
         .kb-hint { font-size: 8px; color: var(--text-muted); text-align: center; margin-top: 5px; }
 
-        /* 機頭朝向箭頭標記（取代純圓點，使航向可視化） */
         .uav-arrow-wrap { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
         .uav-arrow {
             width: 0; height: 0;
@@ -257,7 +246,7 @@
         </div>
 
         <div class="right-telemetry-box">
-            <div class="info-card green-accent"><div class="info-label">Air Speed</div><div class="info-value" id="lbl-speed">29.2 m/s</div></div>
+            <div class="info-card green-accent"><div class="info-label">Air Speed</div><div class="info-value" id="lbl-speed">15.0 m/s</div></div>
             <div class="info-card green-accent"><div class="info-label">Altitude</div><div class="info-value" id="lbl-alt">8107.7 m</div></div>
             <div class="info-card green-accent"><div class="info-label">Lat / Lng</div><div class="info-value" id="lbl-coords" style="font-size:10px;">22.62,120.28</div></div>
         </div>
@@ -290,17 +279,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // 預設基地點（高雄港區核心座標）
     let homePos = [22.6204, 120.2817];
     let currentUAVPos = [22.6204, 120.2817];
 
-    // 1. 初始化 2.5D 立體衛星主地圖
     const map25d = L.map('map25d', { 
         zoomControl: false, attributionControl: false, dragging: false, touchZoom: false, doubleClickZoom: false, scrollWheelZoom: false
     });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18 }).addTo(map25d);
 
-    // 2. 初始化 2D 二維平面戰術小地圖
     const map2d = L.map('map2d', {
         zoomControl: false, attributionControl: false, dragging: true, touchZoom: true
     });
@@ -308,7 +294,6 @@
         maxZoom: 16
     }).addTo(map2d);
 
-    // 在 2D 小地圖上建立可旋轉的「機頭朝向」戰術標記
     const uavIcon = L.divIcon({
         className: 'uav-arrow-wrap',
         html: '<div class="uav-arrow"></div>',
@@ -317,19 +302,11 @@
     });
     const uavMarker = L.marker(homePos, { icon: uavIcon }).addTo(map2d);
 
-    // 📍 點擊戰術小地圖＝設定導航目標點（取代「點擊衛星圖無法定位」的問題）
-    // 主 2.5D 衛星視圖因套用 CSS 3D 透視變形（rotateX/rotateZ），其畫面像素座標
-    // 與 Leaflet 內部座標系不再一致，直接點擊無法準確換算成經緯度；
-    // 因此將「點擊定位」功能實作在未經 3D 變形、座標準確的 2D 戰術地圖上。
     map2d.on('click', function (e) {
         autoFlightArrivalMsg = '✅ 已抵達指定座標，可恢復手動操控';
         startAutoFlight([e.latlng.lat, e.latlng.lng], '🎯 導航至指定座標中...');
     });
 
-    // 📍 點擊「主衛星視圖」也能定位導航
-    // 主視圖因 CSS 3D 變形(rotateX/rotateZ)，無法直接用 Leaflet 內建座標換算，
-    // 因此採用與搖桿操控「相同的幾何補償」反向換算：將點擊位置相對畫面中心的
-    // 像素偏移，反轉 45° 美術旋轉補償後，依目前縮放層級換算成實際經緯度位移。
     function handleSatelliteViewClick(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
         const clickX = clientX - rect.left;
@@ -339,16 +316,14 @@
         const dx = clickX - cx;
         const dy = clickY - cy;
 
-        // 反向套用搖桿移動時使用的 -45° 美術旋轉補償（取其反向角度 +45°）
         const invRad = 45 * Math.PI / 180;
-        const geoDx = dx * Math.cos(invRad) - dy * Math.sin(invRad); // 東西方向像素分量
-        const geoDy = dx * Math.sin(invRad) + dy * Math.cos(invRad); // 南北方向像素分量
+        const geoDx = dx * Math.cos(invRad) - dy * Math.sin(invRad);
+        const geoDy = dx * Math.sin(invRad) + dy * Math.cos(invRad);
 
-        // 依目前地圖縮放層級，將像素距離換算為實際公尺數
         const zoom = map25d.getZoom();
         const metersPerPixel = 156543.03392 * Math.cos(currentUAVPos[0] * Math.PI / 180) / Math.pow(2, zoom);
         const dEastM = geoDx * metersPerPixel;
-        const dNorthM = -geoDy * metersPerPixel; // 畫面上方（負 dy）＝北方
+        const dNorthM = -geoDy * metersPerPixel;
 
         const mLat = 111320;
         const mLng = 111320 * Math.cos(currentUAVPos[0] * Math.PI / 180);
@@ -359,20 +334,19 @@
         startAutoFlight([targetLat, targetLng], '🎯 導航至指定座標中...');
     }
 
-    // 3. 系統狀態數據變數
     let telemetry = {
-        roll: -3.3, pitch: -8.6, airspeed: 29.2, altitude: 8107.7,
+        roll: -3.3, pitch: -8.6, airspeed: 15.0, altitude: 8107.7,
         joyX: 0, joyY: 0, sat: 21, bat: 96
     };
 
-    const MAX_STICK = 42; // 搖桿/鍵盤輸入統一最大行程（像素）
-    const AUTOPILOT_SPEED_MPS = 60; // 🔗 共用飛行速度：起飛爬升與返航/導航皆使用同一數值，確保一致
-    let isTakingOff = false;   // 是否處於自動起飛爬升模式
-    let takeoffTargetAlt = 0;  // 起飛目標高度
-    let heading = 0;        // UAV 機頭朝向，0=正北，順時針增加
-    let isAutoFlying = false; // 是否處於自動導航（返航 / 點擊導航）模式
-    let navTarget = null;     // 自動導航目標座標 [lat, lng]
-    let autoFlightArrivalMsg = ''; // 抵達目標後顯示的提示文字
+    const MAX_STICK = 42; 
+    const AUTOPILOT_SPEED_MPS = 15; 
+    let isTakingOff = false;   
+    let takeoffTargetAlt = 0;  
+    let heading = 0;        
+    let isAutoFlying = false; 
+    let navTarget = null;     
+    let autoFlightArrivalMsg = ''; 
 
     let keysPressed = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
@@ -381,7 +355,6 @@
     const wrapper = document.getElementById('mapWrapper');
     let ws = null;
 
-    // 主衛星視圖點擊定位：滑鼠點擊與觸控點按皆支援
     canvas.addEventListener('click', (e) => handleSatelliteViewClick(e.clientX, e.clientY));
     canvas.addEventListener('touchend', (e) => {
         if (e.changedTouches && e.changedTouches.length > 0) {
@@ -398,9 +371,6 @@
 
     wrapper.style.transform = `rotateX(60deg) rotateZ(45deg)`;
 
-    // 🛰️ 【實作功能：GPS 修正定位】－ 透過瀏覽器 Geolocation API 取得裝置目前實際座標
-    // 修正前版本「修正定位」按鈕僅呼叫 resetDroneView() 把地圖重新置中於既有座標，
-    // 並未真正去「定位」；現改為實際向裝置請求 GPS 座標，取得後才重新置中地圖。
     function acquireGpsFix() {
         const modeEl = document.getElementById('ui-main-mode');
         const restoreLabel = () => {
@@ -408,7 +378,7 @@
         };
 
         if (!navigator.geolocation) {
-            modeEl.innerText = '⚠️ 此瀏覽器/環境不支援 GPS 定位';
+            modeEl.innerText = '⚠️ 此瀏覽器/環境不支援 GPS 定量';
             setTimeout(restoreLabel, 2500);
             return;
         }
@@ -418,7 +388,6 @@
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 currentUAVPos = [pos.coords.latitude, pos.coords.longitude];
-                // 依定位精度（公尺）模擬可視衛星數，精度越高顯示衛星數越多
                 if (pos.coords.accuracy) {
                     telemetry.sat = Math.max(4, Math.min(32, Math.round(40 - pos.coords.accuracy / 5)));
                 }
@@ -438,12 +407,10 @@
         );
     }
 
-    // 🎯 【精準雙地圖居中定位函數】：加入 -0.0018 經緯幾何透視補償
     function resetDroneView() {
         map25d.invalidateSize();
         map2d.invalidateSize();
 
-        // 進行 3D 傾斜視差補償運算（消除 rotateX 產生的視覺物理偏離）
         let compensatedLat = currentUAVPos[0] - 0.0018; 
         let compensatedLng = currentUAVPos[1];
 
@@ -456,11 +423,9 @@
         updateHeadingVisuals();
     }
 
-    // 🧭 計算兩座標間的方位角（bearing，0=正北順時針）與距離（公尺）
-    // 採用適用於小範圍的等距矩形近似換算，對戰術模擬精度已足夠
     function calcBearingDistance(from, to) {
-        const mLat = 111320; // 每緯度約略公尺數
-        const mLng = 111320 * Math.cos(from[0] * Math.PI / 180); // 每經度公尺數（隨緯度修正）
+        const mLat = 111320; 
+        const mLng = 111320 * Math.cos(from[0] * Math.PI / 180); 
         const dNorth = (to[0] - from[0]) * mLat;
         const dEast = (to[1] - from[1]) * mLng;
         const dist = Math.sqrt(dNorth * dNorth + dEast * dEast);
@@ -469,14 +434,12 @@
         return { dist, bearing };
     }
 
-    // 🚀 啟動自動導航（返航 / 點擊導航 共用）：以平滑飛行取代瞬間移動
     function startAutoFlight(target, label) {
         navTarget = [target[0], target[1]];
         isAutoFlying = true;
         document.getElementById('ui-main-mode').innerText = label;
     }
 
-    // ✅ 結束自動導航，恢復手動模式狀態列文字
     function finishAutoFlight() {
         isAutoFlying = false;
         navTarget = null;
@@ -488,18 +451,16 @@
         }, 1500);
     }
 
-    // ✈️ 每一幀執行的自動飛行步進：依當前航向與距離平滑趨近目標點
     function stepAutoFlight() {
         const { dist, bearing } = calcBearingDistance(currentUAVPos, navTarget);
 
-        // 機頭以有限轉向速率平滑轉向目標方位，而非瞬間轉向
         let diff = ((bearing - heading + 540) % 360) - 180;
-        const maxTurnPerFrame = 4; // 每幀最大轉向角度（度）
+        const maxTurnPerFrame = 4; 
         heading = Math.abs(diff) <= maxTurnPerFrame ? bearing : heading + Math.sign(diff) * maxTurnPerFrame;
         heading = (heading + 360) % 360;
 
-        const stepM = AUTOPILOT_SPEED_MPS / 60; // 以 60FPS 估算每幀移動距離（與起飛共用同一速度常數）
-        telemetry.airspeed = AUTOPILOT_SPEED_MPS; // 自動導航期間空速顯示與起飛爬升保持一致
+        const stepM = AUTOPILOT_SPEED_MPS / 60; 
+        telemetry.airspeed = AUTOPILOT_SPEED_MPS; 
 
         if (dist <= stepM) {
             currentUAVPos = [navTarget[0], navTarget[1]];
@@ -524,7 +485,6 @@
         document.getElementById('lbl-coords').innerText = `${currentUAVPos[0].toFixed(2)},${currentUAVPos[1].toFixed(2)}`;
     }
 
-    // 🧭 同步更新機頭朝向視覺呈現（小地圖箭頭旋轉 + 數值顯示）
     function updateHeadingVisuals() {
         const el = uavMarker.getElement();
         if (el) {
@@ -535,25 +495,22 @@
         if (hLbl) hLbl.innerText = Math.round(heading) + '°';
     }
 
-    // 🏠 【實作功能：自動返航機制】－ 平滑飛行返回 Home，而非瞬間移動（不合理的瞬移已修正）
     function triggerReturnToLaunch() {
         console.log("自主返航指令已下達...正在平滑飛行返回 Home 點");
         autoFlightArrivalMsg = '🏠 已抵達 Home 基地，自主返航完成';
         startAutoFlight(homePos, '🏠 自動返航中 (RTL)...');
     }
 
-    // 🛫 【實作功能：自動起飛機制】－ 爬升速度與返航(AUTOPILOT_SPEED_MPS)共用同一數值，確保兩者飛速一致
     function triggerTakeoff() {
-        if (isTakingOff) return; // 已在起飛程序中，避免重複觸發
-        takeoffTargetAlt = telemetry.altitude + 50; // 爬升至目前高度 +50m 的操作高度
+        if (isTakingOff) return; 
+        takeoffTargetAlt = telemetry.altitude + 50; 
         isTakingOff = true;
         document.getElementById('ui-main-mode').innerText = '🛫 自動起飛爬升中...';
     }
 
-    // ✈️ 每一幀執行的起飛爬升步進：以與返航相同的速度常數爬升高度
     function stepTakeoff() {
-        const climbStepM = AUTOPILOT_SPEED_MPS / 60; // 與 stepAutoFlight 相同換算方式，速度一致
-        telemetry.airspeed = AUTOPILOT_SPEED_MPS; // 起飛期間空速顯示與返航/導航保持一致
+        const climbStepM = AUTOPILOT_SPEED_MPS / 60; 
+        telemetry.airspeed = AUTOPILOT_SPEED_MPS; 
 
         if (telemetry.altitude >= takeoffTargetAlt - climbStepM) {
             telemetry.altitude = takeoffTargetAlt;
@@ -568,7 +525,6 @@
         }
     }
 
-    // 🌐 Real-Time UAV WebSocket 連線通訊埠
     function toggleUAVConnection() {
         if (ws && ws.readyState === WebSocket.OPEN) {
             ws.close();
@@ -619,7 +575,6 @@
         ws.onerror = () => { ws.close(); };
     }
 
-    // ⌨️ 鍵盤操控
     window.addEventListener('keydown', (e) => {
         if (["w","a","s","d","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
             keysPressed[e.key] = true; updateJoystickFromKeyboard();
@@ -638,7 +593,6 @@
         if (keysPressed.a || keysPressed.ArrowLeft) x -= MAX_STICK;
         if (keysPressed.d || keysPressed.ArrowRight) x += MAX_STICK;
         if (isAutoFlying && (x !== 0 || y !== 0)) {
-            // 手動操作介入，取消自動導航（返航/點擊導航）
             isAutoFlying = false; navTarget = null;
             document.getElementById('ui-main-mode').innerText = (ws && ws.readyState === WebSocket.OPEN) ? "LIVE TELEMETRY" : "2.5D 精密戰術控制站";
         }
@@ -647,12 +601,10 @@
         telemetry.roll = (x / MAX_STICK) * 25; telemetry.pitch = -(y / MAX_STICK) * 15;
     }
 
-    // 6. 60FPS 核心聯動控制環
     function renderLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const cx = canvas.width / 2; const cy = canvas.height / 2;
 
-        // HUD 姿態儀
         ctx.save(); ctx.translate(cx, cy); ctx.rotate(telemetry.roll * Math.PI / 180); ctx.translate(0, telemetry.pitch * 3.5);
         ctx.strokeStyle = 'rgba(0, 230, 118, 0.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-140, 0); ctx.lineTo(140, 0); ctx.stroke();
         for(let i = -30; i <= 30; i += 10) {
@@ -663,13 +615,8 @@
         }
         ctx.restore();
 
-        // 基準固定十字游標
         ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(cx - 35, cy); ctx.lineTo(cx - 12, cy); ctx.lineTo(cx, cy + 8); ctx.lineTo(cx + 12, cy); ctx.lineTo(cx + 35, cy); ctx.stroke();
 
-        // ✈️ 飛行控制核心：
-        // 1) 若處於自動導航模式（返航/點擊導航），由 stepAutoFlight 接管位置與航向
-        // 2) 手動模式下，左右搖桿＝轉動機頭(yaw)；前後搖桿＝沿「機頭朝向」前進/後退
-        //    （修正前版本誤把左右輸入當作側移，而非真正的機頭轉向）
         if (isTakingOff) {
             stepTakeoff();
         }
@@ -677,18 +624,16 @@
         if (isAutoFlying) {
             stepAutoFlight();
         } else if (Math.abs(telemetry.joyX) > 0.5 || Math.abs(telemetry.joyY) > 0.5) {
-            const turnRatePerFrame = 1.5; // 滿桿時每幀最大轉向角度（約 90°/秒 @60FPS）
+            const turnRatePerFrame = 1.5; 
             heading += (telemetry.joyX / MAX_STICK) * turnRatePerFrame;
             heading = (heading + 360) % 360;
 
-            // 前後桿量決定沿機頭朝向移動的速度（往上推=前進）
-            const fwdSpeed = -(telemetry.joyY / MAX_STICK) * (MAX_STICK * 1.8);
+            const fwdSpeed = -(telemetry.joyY / MAX_STICK) * (MAX_STICK * 0.5);
             const headRad = heading * Math.PI / 180;
-            // 先在「正北朝上」的地理座標空間計算前進向量
-            let geoDx = Math.sin(headRad) * fwdSpeed; // 東西分量
-            let geoDy = -Math.cos(headRad) * fwdSpeed; // 南北分量（畫面上方為北）
+            
+            let geoDx = Math.sin(headRad) * fwdSpeed; 
+            let geoDy = -Math.cos(headRad) * fwdSpeed; 
 
-            // 再套用與 2.5D 視圖外殼相同的 45° 美術旋轉補償，使其對齊畫面方向
             let fixRad = -45 * Math.PI / 180;
             let mapDx = geoDx * Math.cos(fixRad) - geoDy * Math.sin(fixRad);
             let mapDy = geoDx * Math.sin(fixRad) + geoDy * Math.cos(fixRad);
@@ -715,7 +660,6 @@
         requestAnimationFrame(renderLoop);
     }
 
-    // 7. 搖桿事件
     const joyContainer = document.getElementById('joyContainer'); const joyStick = document.getElementById('joyStick'); let isMoving = false;
     function handleJoystickMove(clientX, clientY) {
         const rect = joyContainer.getBoundingClientRect();
@@ -723,7 +667,6 @@
         const dist = Math.sqrt(x*x + y*y);
         if (dist > MAX_STICK) { x = (x / dist) * MAX_STICK; y = (y / dist) * MAX_STICK; }
         if (isAutoFlying && dist > 5) {
-            // 手動操作介入，取消自動導航（返航/點擊導航）
             isAutoFlying = false; navTarget = null;
             document.getElementById('ui-main-mode').innerText = (ws && ws.readyState === WebSocket.OPEN) ? "LIVE TELEMETRY" : "2.5D 精密戰術控制站";
         }
@@ -738,7 +681,6 @@
     function resetJoystick() { isMoving = false; joyStick.style.transform = `translate(0px, 0px)`; telemetry.joyX = 0; telemetry.joyY = 0; telemetry.roll = -3.3; telemetry.pitch = -8.6; }
     window.addEventListener('mouseup', resetJoystick); window.addEventListener('touchend', resetJoystick);
 
-    // 頁面加載完成自動初次對齊
     window.onload = function() {
         setTimeout(() => {
             resetDroneView();
